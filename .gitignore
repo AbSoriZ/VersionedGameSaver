@@ -1,0 +1,71 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+# .NET publish and package output
+publish/
+*.nupkg
+*.snupkg
+*.symbols.nupkg
+
+# User-specific IDE files
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.VC.opendb
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# VS Code local settings
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# NuGet
+*.nuget.props
+*.nuget.targets
+packages/
+project.lock.json
+project.assets.json
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+*.cache
+*.bak
+*.swp
+
+# Test and coverage output
+TestResults/
+coverage/
+coverage.*/
+*.trx
+*.coverage
+*.coveragexml
+
+# Windows / Explorer metadata
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# App-local runtime data, if created near the project during testing
+.vgs/
+snapshots/
