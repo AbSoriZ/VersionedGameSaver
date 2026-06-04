@@ -18,9 +18,24 @@ Windows desktop app for local, versioned game-save snapshots.
 ## Run
 
 ```powershell
-cd VersionedGameSaver
 dotnet run
 ```
+
+## Create Portable EXE
+
+Run:
+
+```powershell
+.\publish-portable.ps1
+```
+
+The shareable executable will be copied to:
+
+```text
+VersionedGameSaver.exe
+```
+
+That root-level `.exe` is self-contained for Windows x64, so it can be shared without asking users to install the .NET runtime separately.
 
 ## Notes
 
