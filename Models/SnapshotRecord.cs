@@ -14,18 +14,31 @@ public sealed class SnapshotRecord
     public SnapshotKind Kind { get; set; } = SnapshotKind.Manual;
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public string? Name { get; set; }
+    public string OriginalName { get; set; } = "";
+    public string? Alias { get; set; }
+    public int? SlotNumber { get; set; }
     public string? Notes { get; set; }
     public string ArchiveRelativePath { get; set; } = "";
     public long SizeBytes { get; set; }
     public int FileCount { get; set; }
 
-    public string DisplayName
+    public string VersionName
     {
         get
         {
-            if (!string.IsNullOrWhiteSpace(Name))
+            if (!string.IsNullOrWhiteSpace(Alias))
             {
-                return Name!;
+                return Alias!;
+            }
+
+            if (!string.IsNullOrWhiteSpace(OriginalName))
+            {
+                return OriginalName;
+            }
+
+            if (Kind == SnapshotKind.Manual && SlotNumber is not null)
+            {
+                return $"Slot {SlotNumber}";
             }
 
             var localTime = CreatedAtUtc.ToLocalTime();
@@ -34,6 +47,8 @@ public sealed class SnapshotRecord
                 : localTime.ToString("g");
         }
     }
+
+    public string DisplayName => VersionName;
 
     public override string ToString() => DisplayName;
 }

@@ -45,12 +45,16 @@
                                Text="No library selected"
                                Foreground="#CBD5E1"
                                Margin="0,4,0,0" />
+                    <TextBlock x:Name="StatusText"
+                               Text="Ready"
+                               Foreground="#93C5FD"
+                               Margin="0,4,0,0" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Choose Library" Click="ChooseLibrary_Click" />
-                    <Button Content="Scan Games" Click="ScanGames_Click" />
-                    <Button Content="Add Manual Profile" Margin="0" Click="AddManualProfile_Click" />
+                    <Button x:Name="ChooseLibraryButton" Content="Choose Library" Click="ChooseLibrary_Click" />
+                    <Button x:Name="ScanGamesButton" Content="Scan Games" Click="ScanGames_Click" />
+                    <Button x:Name="AddManualProfileButton" Content="Add Manual Profile" Margin="0" Click="AddManualProfile_Click" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -66,7 +70,7 @@
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Games" />
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                        <Button Content="Delete Game Backup" Margin="0" Click="DeleteGame_Click" />
+                        <Button x:Name="RemoveGameButton" Content="Remove Game From Library" Margin="0" Click="DeleteGame_Click" />
                     </StackPanel>
                     <ListBox x:Name="GamesList" SelectionChanged="GamesList_SelectionChanged" />
                 </DockPanel>
@@ -74,21 +78,36 @@
 
             <Border Grid.Column="1" Background="White" BorderBrush="#D7DEE8" BorderThickness="1" Padding="14" Margin="0,0,12,0">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Saves, Worlds, Files" />
+                    <TextBlock DockPanel.Dock="Top" Style="{StaticResource PaneTitle}" Text="Saves / Files" />
                     <StackPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
-                        <Button Content="Back Up Selected" Margin="0,0,0,8" Click="BackupSelected_Click" />
+                        <Button x:Name="BackupSelectedButton" Content="Back Up Selected" Margin="0,0,0,8" Click="BackupSelected_Click" />
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="8" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Add Folder" Margin="0" Click="AddFolderScope_Click" />
-                            <Button Grid.Column="2" Content="Add File" Margin="0" Click="AddFileScope_Click" />
+                            <Button x:Name="AddFolderButton" Grid.Column="0" Content="Add Folder" Margin="0" Click="AddFolderScope_Click" />
+                            <Button x:Name="AddFileButton" Grid.Column="2" Content="Add File" Margin="0" Click="AddFileScope_Click" />
                         </Grid>
-                        <Button Content="Delete Scope" Margin="0" Click="DeleteScope_Click" />
                     </StackPanel>
-                    <ListBox x:Name="ScopesList" SelectionChanged="ScopesList_SelectionChanged" />
+                    <ListBox x:Name="ScopesList" SelectionChanged="ScopesList_SelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <EventSetter Event="PreviewMouseRightButtonDown" Handler="ScopesListItem_PreviewMouseRightButtonDown" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Details" Click="ShowScopeDetails_Click" />
+                                <Separator />
+                                <MenuItem Header="Edit Alias" Click="EditScopeAlias_Click" />
+                                <MenuItem Header="Clear Alias" Click="ClearScopeAlias_Click" />
+                                <Separator />
+                                <MenuItem Header="Delete Save Entry" Click="DeleteScope_Click" />
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                    </ListBox>
                 </DockPanel>
             </Border>
 
@@ -99,26 +118,107 @@
                         <TextBlock x:Name="VersionDetailsText" Text="Select a version to see details." TextWrapping="Wrap" Margin="0,0,0,8" />
                         <TextBlock Text="Notes" FontWeight="SemiBold" Margin="0,0,0,4" />
                         <TextBox x:Name="NotesText"
-                                 IsReadOnly="True"
                                  TextWrapping="Wrap"
                                  AcceptsReturn="True"
                                  MinHeight="74"
                                  VerticalScrollBarVisibility="Auto"
+                                 TextChanged="NotesText_TextChanged"
                                  Margin="0,0,0,10" />
                         <WrapPanel>
-                            <Button Content="Restore" Click="RestoreSelected_Click" />
-                            <Button Content="Overwrite" Click="OverwriteSelected_Click" />
-                            <Button Content="Edit Name/Notes" Click="EditSnapshot_Click" />
-                            <Button Content="Delete Version" Margin="0" Click="DeleteSnapshot_Click" />
+                            <Button x:Name="RestoreButton" Content="Restore" Click="RestoreSelected_Click" />
+                            <Button x:Name="OverwriteButton" Content="Overwrite" Click="OverwriteSelected_Click" />
+                            <Button x:Name="DeleteVersionButton" Content="Delete Version" Margin="0" Click="DeleteSnapshot_Click" />
                         </WrapPanel>
                     </StackPanel>
 
                     <TabControl x:Name="VersionsTabs" SelectionChanged="VersionsTabs_SelectionChanged">
                         <TabItem Header="Versions">
-                            <ListBox x:Name="ManualSnapshotsList" SelectionChanged="SnapshotsList_SelectionChanged" />
+                            <ListView x:Name="ManualSnapshotsList" SelectionMode="Extended" SelectionChanged="SnapshotsList_SelectionChanged" GridViewColumnHeader.Click="ManualSnapshotHeader_Click">
+                                <ListView.View>
+                                    <GridView AllowsColumnReorder="True">
+                                        <GridViewColumn Header="Slot" Width="48" DisplayMemberBinding="{Binding SlotText}" />
+                                        <GridViewColumn Header="Alias" Width="130">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding EditableAlias, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             MinWidth="104"
+                                                             Padding="4,2"
+                                                             BorderThickness="0"
+                                                             Background="Transparent"
+                                                             GotFocus="AliasTextBox_GotFocus"
+                                                             KeyDown="AliasTextBox_KeyDown"
+                                                             LostFocus="AliasTextBox_LostFocus" />
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="Save Entry" Width="130" DisplayMemberBinding="{Binding SaveEntryName}" />
+                                        <GridViewColumn Header="Date" Width="130" DisplayMemberBinding="{Binding CreatedText}" />
+                                        <GridViewColumn Header="Files" Width="64" DisplayMemberBinding="{Binding FileCountText}" />
+                                        <GridViewColumn Header="Size" Width="78" DisplayMemberBinding="{Binding SizeText}" />
+                                    </GridView>
+                                </ListView.View>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="SnapshotListItem_PreviewMouseRightButtonDown" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Details" Click="ShowSnapshotDetails_Click" />
+                                        <MenuItem Header="Edit Alias" Click="EditSnapshotAlias_Click" />
+                                        <MenuItem Header="Clear Alias" Click="ClearSnapshotAlias_Click" />
+                                        <Separator />
+                                        <MenuItem Header="Restore" Click="RestoreSelected_Click" />
+                                        <MenuItem Header="Overwrite" Click="OverwriteSelected_Click" />
+                                        <Separator />
+                                        <MenuItem Header="Delete Version" Click="DeleteSnapshot_Click" />
+                                    </ContextMenu>
+                                </ListView.ContextMenu>
+                            </ListView>
                         </TabItem>
                         <TabItem Header="Safety">
-                            <ListBox x:Name="SafetySnapshotsList" SelectionChanged="SnapshotsList_SelectionChanged" />
+                            <ListView x:Name="SafetySnapshotsList" SelectionMode="Extended" SelectionChanged="SnapshotsList_SelectionChanged" GridViewColumnHeader.Click="SafetySnapshotHeader_Click">
+                                <ListView.View>
+                                    <GridView AllowsColumnReorder="True">
+                                        <GridViewColumn Header="Slot" Width="48" DisplayMemberBinding="{Binding SlotText}" />
+                                        <GridViewColumn Header="Alias" Width="130">
+                                            <GridViewColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <TextBox Text="{Binding EditableAlias, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                             MinWidth="104"
+                                                             Padding="4,2"
+                                                             BorderThickness="0"
+                                                             Background="Transparent"
+                                                             GotFocus="AliasTextBox_GotFocus"
+                                                             KeyDown="AliasTextBox_KeyDown"
+                                                             LostFocus="AliasTextBox_LostFocus" />
+                                                </DataTemplate>
+                                            </GridViewColumn.CellTemplate>
+                                        </GridViewColumn>
+                                        <GridViewColumn Header="Save Entry" Width="130" DisplayMemberBinding="{Binding SaveEntryName}" />
+                                        <GridViewColumn Header="Date" Width="130" DisplayMemberBinding="{Binding CreatedText}" />
+                                        <GridViewColumn Header="Files" Width="64" DisplayMemberBinding="{Binding FileCountText}" />
+                                        <GridViewColumn Header="Size" Width="78" DisplayMemberBinding="{Binding SizeText}" />
+                                    </GridView>
+                                </ListView.View>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <EventSetter Event="PreviewMouseRightButtonDown" Handler="SnapshotListItem_PreviewMouseRightButtonDown" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Details" Click="ShowSnapshotDetails_Click" />
+                                        <MenuItem Header="Edit Alias" Click="EditSnapshotAlias_Click" />
+                                        <MenuItem Header="Clear Alias" Click="ClearSnapshotAlias_Click" />
+                                        <Separator />
+                                        <MenuItem Header="Restore" Click="RestoreSelected_Click" />
+                                        <MenuItem Header="Overwrite" Click="OverwriteSelected_Click" />
+                                        <Separator />
+                                        <MenuItem Header="Delete Version" Click="DeleteSnapshot_Click" />
+                                    </ContextMenu>
+                                </ListView.ContextMenu>
+                            </ListView>
                         </TabItem>
                     </TabControl>
                 </DockPanel>

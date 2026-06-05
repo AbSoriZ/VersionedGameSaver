@@ -55,7 +55,8 @@ public sealed class SnapshotService
             ProfileId = profile.Id,
             ScopeId = scope.Id,
             Kind = kind,
-            CreatedAtUtc = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow,
+            SlotNumber = kind == SnapshotKind.Manual ? NextSlotNumber(catalog, profile.Id, scope.Id) : null
         };
 
         if (overwrite is not null)
@@ -63,6 +64,13 @@ public sealed class SnapshotService
             DeleteArchiveIfPresent(libraryPath, overwrite);
             snapshot.CreatedAtUtc = DateTime.UtcNow;
             snapshot.Kind = kind;
+        }
+
+        if (string.IsNullOrWhiteSpace(snapshot.OriginalName))
+        {
+            snapshot.OriginalName = snapshot.Kind == SnapshotKind.Manual && snapshot.SlotNumber is not null
+                ? $"Slot {snapshot.SlotNumber}"
+                : $"Auto before restore - {snapshot.CreatedAtUtc.ToLocalTime():g}";
         }
 
         var snapshotDirectory = Path.Combine(
@@ -325,6 +333,18 @@ public sealed class SnapshotService
         var invalid = Path.GetInvalidFileNameChars();
         var cleaned = new string(value.Select(character => invalid.Contains(character) ? '-' : character).ToArray());
         return string.IsNullOrWhiteSpace(cleaned) ? "item" : cleaned;
+    }
+
+    private static int NextSlotNumber(BackupCatalog catalog, string profileId, string scopeId)
+    {
+        var usedSlots = catalog.Snapshots
+            .Where(snapshot => snapshot.ProfileId == profileId
+                && snapshot.ScopeId == scopeId
+                && snapshot.Kind == SnapshotKind.Manual
+                && snapshot.SlotNumber is not null)
+            .Select(snapshot => snapshot.SlotNumber!.Value);
+
+        return usedSlots.DefaultIfEmpty(-1).Max() + 1;
     }
 }
 

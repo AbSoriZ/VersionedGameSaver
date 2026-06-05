@@ -27,15 +27,18 @@ public sealed class PresetScanner
             profile.Scopes.Add(new SaveScope
             {
                 Label = "All Project Zomboid saves",
+                OriginalName = "All Project Zomboid saves",
                 Kind = SaveScopeKind.WholeGame,
                 Items = [new ScopeItem { SourcePath = zomboidRoot }]
             });
 
             foreach (var world in FindProjectZomboidWorlds(zomboidRoot))
             {
+                var originalName = Path.GetFileName(world);
                 profile.Scopes.Add(new SaveScope
                 {
-                    Label = Path.GetFileName(world),
+                    Label = originalName,
+                    OriginalName = originalName,
                     Kind = SaveScopeKind.DetectedWorld,
                     Items = [new ScopeItem { SourcePath = world }]
                 });
