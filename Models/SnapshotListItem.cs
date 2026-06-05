@@ -2,26 +2,21 @@ namespace VersionedGameSaver.Models;
 
 public sealed class SnapshotListItem
 {
-    public required SnapshotRecord Snapshot { get; init; }
-    public required SaveScope Scope { get; init; }
+    public required SaveVersion Version { get; init; }
+    public required LiveSaveEntry LiveSave { get; init; }
 
-    public string SlotText => Snapshot.SlotNumber?.ToString() ?? "Auto";
-    public int SlotSort => Snapshot.SlotNumber ?? int.MaxValue;
-    public string AliasText => string.IsNullOrWhiteSpace(Snapshot.Alias) ? "-" : Snapshot.Alias!;
-    public string EditableAlias
-    {
-        get => Snapshot.Alias ?? "";
-        set => Snapshot.Alias = string.IsNullOrWhiteSpace(value) ? null : value;
-    }
-    public string AliasSort => Snapshot.Alias ?? "";
-    public string SaveEntryName => Scope.DisplayName;
-    public string SaveEntrySort => Scope.DisplayName;
-    public string CreatedText => Snapshot.CreatedAtUtc.ToLocalTime().ToString("g");
-    public DateTime CreatedSort => Snapshot.CreatedAtUtc;
-    public string FileCountText => Snapshot.FileCount.ToString("N0");
-    public int FileCountSort => Snapshot.FileCount;
-    public string SizeText => Services.FileSizeFormatter.Format(Snapshot.SizeBytes);
-    public long SizeSort => Snapshot.SizeBytes;
+    public string SlotText => Version.SlotNumber?.ToString() ?? "Auto";
+    public int SlotSort => Version.SlotNumber ?? int.MaxValue;
+    public string AliasText => string.IsNullOrWhiteSpace(Version.Alias) ? "-" : Version.Alias!;
+    public string AliasSort => Version.Alias ?? "";
+    public string SaveEntryName => LiveSave.DisplayName;
+    public string SaveEntrySort => LiveSave.DisplayName;
+    public string CreatedText => Version.CreatedAtUtc.ToLocalTime().ToString("g");
+    public DateTime CreatedSort => Version.CreatedAtUtc;
+    public string FileCountText => Version.IsPlaceholder ? "0" : Version.FileCount.ToString("N0");
+    public int FileCountSort => Version.FileCount;
+    public string SizeText => Version.IsPlaceholder ? "0 B" : Services.FileSizeFormatter.Format(Version.SizeBytes);
+    public long SizeSort => Version.SizeBytes;
     public string DisplayName => $"{SaveEntryName} - {SlotText}";
 
     public override string ToString() => DisplayName;

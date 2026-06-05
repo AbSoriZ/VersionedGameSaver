@@ -16,6 +16,12 @@
 
   <ItemGroup>
     <Content Include="Assets\App.ico" />
+    <EmbeddedResource Include="Assets\GameSaveManifest\manifest.yaml" />
+    <EmbeddedResource Include="Assets\GameSaveManifest\LICENSE.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
 </Project>

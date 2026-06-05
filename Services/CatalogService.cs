@@ -28,76 +28,80 @@ public sealed class CatalogService
     public void Save(string libraryPath, BackupCatalog catalog) =>
         JsonFile.Save(GetCatalogPath(libraryPath), catalog);
 
-    private static bool Normalize(BackupCatalog catalog)
+    private static void Normalize(BackupCatalog catalog)
     {
-        var changed = false;
+        catalog.SchemaVersion = Math.Max(catalog.SchemaVersion, 2);
 
-        foreach (var scope in catalog.Profiles.SelectMany(profile => profile.Scopes))
+        foreach (var game in catalog.Games)
         {
-            var inferredOriginalName = InferOriginalName(scope);
-            if (string.IsNullOrWhiteSpace(scope.OriginalName))
+            if (string.IsNullOrWhiteSpace(game.OriginalName))
             {
-                scope.OriginalName = inferredOriginalName;
-                changed = true;
+                game.OriginalName = string.IsNullOrWhiteSpace(game.Name) ? "Game" : game.Name;
             }
 
-            if (string.IsNullOrWhiteSpace(scope.Alias)
-                && !string.IsNullOrWhiteSpace(scope.Label)
-                && !string.Equals(scope.Label, scope.OriginalName, StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(game.Name))
             {
-                scope.Alias = scope.Label;
-                changed = true;
+                game.Name = game.DisplayName;
             }
 
-            var desiredLabel = scope.DisplayName;
-            if (!string.Equals(scope.Label, desiredLabel, StringComparison.Ordinal))
+            if (string.IsNullOrWhiteSpace(game.GameKey))
             {
-                scope.Label = desiredLabel;
-                changed = true;
+                game.GameKey = Slug(game.OriginalName);
             }
-        }
 
-        foreach (var profile in catalog.Profiles)
-        {
-            foreach (var snapshotGroup in catalog.Snapshots.Where(snapshot => snapshot.ProfileId == profile.Id).GroupBy(snapshot => snapshot.ScopeId))
+            foreach (var liveSave in game.LiveSaves)
+            {
+                if (string.IsNullOrWhiteSpace(liveSave.OriginalName))
+                {
+                    liveSave.OriginalName = InferOriginalName(liveSave);
+                }
+
+                liveSave.Label = liveSave.DisplayName;
+            }
+
+            foreach (var versionGroup in catalog.Versions
+                         .Where(version => version.GameId == game.Id)
+                         .GroupBy(version => version.LiveSaveEntryId))
             {
                 var nextSlot = 0;
-                foreach (var snapshot in snapshotGroup.OrderBy(snapshot => snapshot.CreatedAtUtc))
+                foreach (var version in versionGroup.OrderBy(version => version.CreatedAtUtc))
                 {
-                    if (!string.IsNullOrWhiteSpace(snapshot.Name) && string.IsNullOrWhiteSpace(snapshot.Alias))
+                    if (!string.IsNullOrWhiteSpace(version.Name) && string.IsNullOrWhiteSpace(version.Alias))
                     {
-                        snapshot.Alias = snapshot.Name;
-                        changed = true;
+                        version.Alias = version.Name;
                     }
 
-                    if (snapshot.Kind == SnapshotKind.Manual && snapshot.SlotNumber is null)
+                    if (version.Kind == SaveVersionKind.Manual && version.SlotNumber is null)
                     {
-                        snapshot.SlotNumber = nextSlot;
-                        changed = true;
+                        version.SlotNumber = nextSlot;
                     }
 
-                    if (snapshot.Kind == SnapshotKind.Manual && snapshot.SlotNumber is not null)
+                    if (version.Kind == SaveVersionKind.Manual && version.SlotNumber is not null)
                     {
-                        nextSlot = Math.Max(nextSlot, snapshot.SlotNumber.Value + 1);
+                        nextSlot = Math.Max(nextSlot, version.SlotNumber.Value + 1);
                     }
 
-                    if (string.IsNullOrWhiteSpace(snapshot.OriginalName))
+                    if (string.IsNullOrWhiteSpace(version.OriginalName))
                     {
-                        snapshot.OriginalName = snapshot.Kind == SnapshotKind.Manual && snapshot.SlotNumber is not null
-                            ? $"Slot {snapshot.SlotNumber}"
-                            : $"Auto before restore - {snapshot.CreatedAtUtc.ToLocalTime():g}";
-                        changed = true;
+                        version.OriginalName = version.IsPlaceholder && version.Kind == SaveVersionKind.Manual && version.SlotNumber is not null
+                            ? $"Empty Slot {version.SlotNumber}"
+                            : version.Kind == SaveVersionKind.Manual && version.SlotNumber is not null
+                            ? $"Slot {version.SlotNumber}"
+                            : $"Auto before restore - {version.CreatedAtUtc.ToLocalTime():g}";
                     }
                 }
             }
         }
-
-        return changed;
     }
 
-    private static string InferOriginalName(SaveScope scope)
+    private static string InferOriginalName(LiveSaveEntry liveSave)
     {
-        var firstPath = scope.Items.FirstOrDefault()?.SourcePath;
+        if (liveSave.Kind == LiveSaveEntryKind.AllSaveData)
+        {
+            return "All save data";
+        }
+
+        var firstPath = liveSave.Items.FirstOrDefault()?.SourcePath;
         if (!string.IsNullOrWhiteSpace(firstPath))
         {
             var trimmed = firstPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
@@ -108,11 +112,14 @@ public sealed class CatalogService
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(scope.Label))
-        {
-            return scope.Label;
-        }
+        return string.IsNullOrWhiteSpace(liveSave.Label) ? "Live save data" : liveSave.Label;
+    }
 
-        return "Save Entry";
+    private static string Slug(string value)
+    {
+        var chars = value.ToLowerInvariant()
+            .Select(character => char.IsLetterOrDigit(character) ? character : '-')
+            .ToArray();
+        return new string(chars).Trim('-');
     }
 }

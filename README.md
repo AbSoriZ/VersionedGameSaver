@@ -5,7 +5,7 @@ Windows desktop app for local, versioned game-save snapshots.
 ## Current MVP
 
 - Choose a portable backup library folder.
-- Manually scan for preset games.
+- Scan a bundled game-save manifest for detected games and live save data.
 - Add manual game profiles.
 - Track whole save folders, custom folders, or single save files.
 - Right-click save entries to view details, edit aliases, clear aliases, or delete entries.
@@ -47,10 +47,4 @@ That root-level `.exe` is self-contained for Windows x64, so it can be shared wi
 
 ## Notes
 
-The first implemented preset is Project Zomboid, using the common Windows save path:
-
-```text
-%USERPROFILE%\Zomboid\Saves
-```
-
-The scanner adds profiles only when confirmed save folders exist on disk. Registry-based saves, scheduled backups, and full Ludusavi manifest ingestion are future work.
+The bundled game-save manifest is sourced from the Ludusavi Manifest project and included under its MIT license. It is sanitized for backup-location scanning, so launcher command metadata is omitted. Runtime scanning is offline and does not require internet access or any external executable.
