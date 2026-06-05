@@ -16,6 +16,31 @@ Versioned Game Saver releases are currently unsigned. Windows SmartScreen or ant
 
 If you prefer not to run the release executable, you can review the source and build the app locally with the commands below.
 
+## Quick Start
+
+1. Download `VersionedGameSaver.exe` from the [GitHub Releases](https://github.com/AbSoriZ/VersionedGameSaver/releases) page.
+2. Run the executable.
+3. Click `Choose Library` and select a stable folder where backups should be stored.
+4. Click `Scan Games` to detect supported games and live save data from the bundled manifest.
+5. Select a game in `Games`.
+6. Select a save entry in `Live Save Data`.
+7. Click `Back Up Selected` to create a new version.
+8. Select a version later to view details, edit its alias or notes, `Restore`, `Overwrite`, or `Delete Version`.
+
+Restoring a version modifies the live save files for the selected save entry. Versioned Game Saver creates a safety snapshot before restore, but you should still keep your backup library in a folder that will not be moved or cleaned up accidentally.
+
+## Common Tasks
+
+- Add a custom game: click `Add Custom Game`, then add save entries with `Add Folder` or `Add File`.
+- Back up one save entry: select a game, select a live save entry, then click `Back Up Selected`.
+- Back up everything: click `Back Up All Games` and choose how each game should be handled.
+- Restore a version: select a version, confirm it is the right save entry, then click `Restore`.
+- Overwrite a version: select a version and click `Overwrite` to replace that version with the current live save data.
+- Rename a save entry or version: use `Edit Alias` from the right-click menu, or edit a selected version in the alias field.
+- Add notes: select a version and type in the `Notes` box; notes autosave.
+- Import an older backup: select the relevant save entry or version area, then use `Import Prior Save...`.
+- Review safety backups: open the `Safety` tab to see snapshots created before restore operations.
+
 ## Features
 
 - Choose a portable backup library folder.
