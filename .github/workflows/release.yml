@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish Windows release
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore VersionedGameSaver.csproj
+
+      - name: Build
+        run: dotnet build VersionedGameSaver.csproj -c Release --no-restore
+
+      - name: Publish
+        run: >
+          dotnet publish VersionedGameSaver.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-build
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true
+          -p:PublishDir=artifacts/publish/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/publish/VersionedGameSaver.exe
+          generate_release_notes: true

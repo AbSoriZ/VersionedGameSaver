@@ -13,7 +13,7 @@ publish/
 *.nupkg
 *.snupkg
 *.symbols.nupkg
-!VersionedGameSaver.exe
+VersionedGameSaver.exe
 
 # User-specific IDE files
 *.user
